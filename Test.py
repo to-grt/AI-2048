@@ -13,26 +13,31 @@ class Test:
 
         initial_array = [0,0,0,0,0]
         expected_result = [0,0,0,0,0]
-        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).any(), ">> test 1: FAILED"
+        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).all(), ">> test 1: FAILED"
         print(">> test 1: SUCCESS")
         
         initial_array = [1,1,1,1]
         expected_result = [2,2,0,0]
-        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).any(), ">> test 2: FAILED"
+        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).all(), ">> test 2: FAILED"
         print(">> test 2: SUCCESS")
         
         initial_array = [0,1,0,0,1]
         expected_result = [2,0,0,0,0]
-        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).any(), ">> test 3: FAILED"
+        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).all(), ">> test 3: FAILED"
         print(">> test 3: SUCCESS")
         
         initial_array = [16,16,16,0,16]
         expected_result = [32,32,0,0,0]
-        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).any(), ">> test 4: FAILED"
+        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).all(), ">> test 4: FAILED"
         print(">> test 4: SUCCESS")
         
         initial_array = [1,2,3,4,6]
         expected_result = [1,2,3,4,6]
-        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).any(), ">> test 5: FAILED"
+        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).all(), ">> test 5: FAILED"
         print(">> test 5: SUCCESS")
+
+        initial_array = [4096,4096,4096,4096,4096]
+        expected_result = [8192,8192,4096,0,0]
+        assert (grid.perform_simplification(np.array(initial_array)) == expected_result).all(), ">> test 6: FAILED"
+        print(">> test 6: SUCCESS")
         
