@@ -15,6 +15,7 @@ class Grid:
         self.__init__(self.shape[0], self.shape[1])
 
     def set(self, model) -> None:
+        assert model.shape == self.grid.shape, "The model and the grid must have the same shapes"
         self.grid = model
 
     # TODO peut etre optimisé, très long lorsque la grille est presque pleine, a corriger later, modifier la fonction depuis le else
@@ -55,15 +56,13 @@ class Grid:
             # ici nous n'inversons pas, la foncion perform_simplification est initialement créee pour les roll vers la gauche
             self.grid[index] = self.perform_simplification(row)
             if self.prints: print("--------------")
-        self.set_random_cells(1)
 
     def roll_right(self) -> None:
         for index, row in enumerate(self.grid):
             if self.prints: print("performing simplication on the row:\ninitial: ", row)
             # ici nous allons inverser la ligne pour qu'elle soit optimisable
-            self.grid[index] = self.perform_simplification(np.flip(row))
+            self.grid[index] = np.flip(self.perform_simplification(np.flip(row)))
             if self.prints: print("--------------")
-        self.set_random_cells(1)
 
     def roll_up(self) -> None:
         for index in range(self.grid.shape[1]):
@@ -72,13 +71,11 @@ class Grid:
             # ici nous n'inversons pas, la foncion perform_simplification est initialement créee pour les roll vers la gauche
             self.grid[:, index] = self.perform_simplification(col)
             if self.prints: print("--------------")
-        self.set_random_cells(1)
 
     def roll_down(self) -> None:
         for index in range(self.grid.shape[1]):
             col = self.grid[:, index]
             if self.prints: print("performing simplication on the col number: ", index, "\ninitial: ", col)
             # ici nous n'inversons pas, la foncion perform_simplification est initialement créee pour les roll vers la gauche
-            self.grid[:, index] = self.perform_simplification(np.flip(col))
+            self.grid[:, index] = np.flip(self.perform_simplification(np.flip(col)))
             if self.prints: print("--------------")
-        self.set_random_cells(1)

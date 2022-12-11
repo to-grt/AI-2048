@@ -1,4 +1,5 @@
 from Test import Test
+from Grid import Grid
 
 testeur = Test()
-testeur.test_simpl()
+del testeur
