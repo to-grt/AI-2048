@@ -10,9 +10,24 @@ class Grid:
     def __repr__(self) -> str:
         return str(self.grid)
 
-    def is_game_over(self) -> bool:
-        if np.min(self.grid) > 0: return True
-        return False
+    def is_game_over(self) -> bool:     #TODO probably optimizable
+        memory = self.roll_down()
+        if not np.array_equal(self.grid, memory):
+            self.set(memory)
+            return False
+        memory = self.roll_up()
+        if not np.array_equal(self.grid, memory):
+            self.set(memory)
+            return False
+        memory = self.roll_left()
+        if not np.array_equal(self.grid, memory):
+            self.set(memory)
+            return False
+        memory = self.roll_right()
+        if not np.array_equal(self.grid, memory):
+            self.set(memory)
+            return False    
+        return True
 
     def is_win(self) -> bool:
         if np.max(self.grid) >= 2048: return True
@@ -22,7 +37,7 @@ class Grid:
         self.__init__(self.shape[0], self.shape[1], 0)
 
     def set(self, model) -> None:
-        assert model.shape == self.grid.shape, "The model and the grid must have the same shapes"
+        assert model.shape == self.grid.shape, "The model and the grid must have the same shapes. model's shape: "
         self.grid = np.copy(model)
 
     # Maybe its opti...
@@ -38,19 +53,6 @@ class Grid:
             else: 
                 if self.prints: print("this cell is not empty, restarting...")
                 self.set_random_cells(1)
-
-    def set_random_cells_1(self, nb_cells) -> None:    
-        for _ in range(nb_cells):
-            if self.prints: print("setting cell number: ", _)
-            index_row = np.random.randint(0, self.grid.shape[0])
-            index_column = np.random.randint(0, self.grid.shape[1])
-            if self.grid[index_row, index_column] == 0:
-                random_value = np.random.randint(0, 10)
-                if self.prints: print("coords of the cell: ", index_row, ", ", index_column, "\n")
-                self.grid[index_row, index_column] = 2 if random_value <= 8 else 4
-            else: 
-                if self.prints: print("this cell is not empty, restarting...")
-                self.set_random_cells_1(1)
 
     def perform_simplification(self, row) -> None:
         if np.sum(row) == 0:
@@ -70,32 +72,40 @@ class Grid:
         if self.prints: print("final: ", row)
         return row
 
-    def roll_left(self) -> None:
+    def roll_left(self):
+        memory = np.copy(self.grid)
         for index, row in enumerate(self.grid):
             if self.prints: print("performing simplication on the row:")
             # ici nous n'inversons pas, la foncion perform_simplification est initialement créee pour les roll vers la gauche
             self.grid[index] = self.perform_simplification(row)
             if self.prints: print("--------------")
+        return memory
 
     def roll_right(self) -> None:
+        memory = np.copy(self.grid)
         for index, row in enumerate(self.grid):
             if self.prints: print("performing simplication on the row:\ninitial: ", row)
             # ici nous allons inverser la ligne pour qu'elle soit optimisable
             self.grid[index] = np.flip(self.perform_simplification(np.flip(row)))
             if self.prints: print("--------------")
+        return memory
 
     def roll_up(self) -> None:
+        memory = np.copy(self.grid)
         for index in range(self.grid.shape[1]):
             col = self.grid[:, index]
             if self.prints: print("performing simplication on the col number: ", index, "\ninitial: ", col)
             # ici nous n'inversons pas, la foncion perform_simplification est initialement créee pour les roll vers la gauche
             self.grid[:, index] = self.perform_simplification(col)
             if self.prints: print("--------------")
+        return memory
 
     def roll_down(self) -> None:
+        memory = np.copy(self.grid)
         for index in range(self.grid.shape[1]):
             col = self.grid[:, index]
             if self.prints: print("performing simplication on the col number: ", index, "\ninitial: ", col)
             # ici nous n'inversons pas, la foncion perform_simplification est initialement créee pour les roll vers la gauche
             self.grid[:, index] = np.flip(self.perform_simplification(np.flip(col)))
             if self.prints: print("--------------")
+        return memory

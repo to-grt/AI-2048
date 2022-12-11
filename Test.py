@@ -11,7 +11,46 @@ class Test:
         self.test_roll_up()
         self.test_roll_left()
         self.test_roll_right()
+        self.test_logic_engine()
         print("\n\nend of the tests - good to go\n------------------\n\n")
+
+    def test_logic_engine(self) -> None:
+        print("----------------------\ngrid logic tests:\n")
+
+        grid = Grid(4,4)
+
+        model = np.array([[1,1,1,1],
+                          [1,1,1,1],
+                          [1,1,1,1],
+                          [1,1,1,1]])
+        grid.set(model)
+        assert not grid.is_game_over() and not grid.is_win(), ">> test 1: FAILED"
+        print(">> test 1: SUCCESS")
+
+        model = np.array([[1,2,3,4],
+                          [5,6,7,8],
+                          [9,10,11,12],
+                          [13,14,15,16]])
+        grid.set(model)
+        assert grid.is_game_over() and not grid.is_win(), ">> test 2: FAILED"
+        print(">> test 2: SUCCESS")
+
+        model = np.array([[1,10000,1,1],
+                          [1,1,1,1],
+                          [1,1,1,1],
+                          [1,1,1,1]])
+        grid.set(model)
+        assert not grid.is_game_over() and grid.is_win(), ">> test 3: FAILED"
+        print(">> test 3: SUCCESS")
+
+        model = np.array([[1,2,3,4],
+                          [5,6,7,8],
+                          [9,10,11,12],
+                          [13,14,15,10000]])
+        grid.set(model)
+        assert grid.is_game_over() and grid.is_win(), ">> test 4: FAILED"
+        print(">> test 4: SUCCESS")
+
 
     def test_set(self) -> None:
         print("----------------------\ngrid.set tests:\n")
@@ -81,6 +120,7 @@ class Test:
         grid.roll_right()
         assert (grid.grid == np.array([[0,0,100,200], [0,0,4,4], [0,0,0,1000], [0,0,0,0]])).all(), ">> test 2: FAILED"
         print(">> test 2: SUCCESS")
+
 
     def test_roll_up(self) -> None:
         print("----------------------\nroll_up tests:\n")
