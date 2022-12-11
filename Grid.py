@@ -2,24 +2,24 @@ import numpy as np
 
 class Grid:
 
-    def __init__(self, height, width, prints, nb_cells) -> None:
+    def __init__(self, height, width, nb_cells, prints=False) -> None:
         self.grid = np.zeros((height, width))
         self.shape = self.grid.shape
         self.prints = prints
-        self.set_random_cells(nb_cells)
+        #self.set_random_cells(nb_cells)
 
     def __repr__(self) -> str:
         return str(self.grid)
 
     def reset(self) -> None:
-        self.__init__(self.shape[0], self.shape[1])
+        self.__init__(self.shape[0], self.shape[1], 0)
 
     def set(self, model) -> None:
         assert model.shape == self.grid.shape, "The model and the grid must have the same shapes"
-        self.grid = model
+        self.grid = np.copy(model)
 
-    # TODO peut etre optimisé, très long lorsque la grille est presque pleine, a corriger later, modifier la fonction depuis le else
-    def set_random_cells(self, nb_cells) -> None:         
+    # Maybe its opti...
+    def set_random_cells(self, nb_cells) -> None:    
         for _ in range(nb_cells):
             if self.prints: print("setting cell number: ", _)
             index_row = np.random.randint(0, self.grid.shape[0])
