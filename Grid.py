@@ -2,14 +2,21 @@ import numpy as np
 
 class Grid:
 
-    def __init__(self, height, width, nb_cells, prints=False) -> None:
+    def __init__(self, height, width, prints=False) -> None:
         self.grid = np.zeros((height, width))
         self.shape = self.grid.shape
         self.prints = prints
-        #self.set_random_cells(nb_cells)
 
     def __repr__(self) -> str:
         return str(self.grid)
+
+    def is_game_over(self) -> bool:
+        if np.min(self.grid) > 0: return True
+        return False
+
+    def is_win(self) -> bool:
+        if np.max(self.grid) >= 2048: return True
+        return False        
 
     def reset(self) -> None:
         self.__init__(self.shape[0], self.shape[1], 0)
@@ -31,6 +38,19 @@ class Grid:
             else: 
                 if self.prints: print("this cell is not empty, restarting...")
                 self.set_random_cells(1)
+
+    def set_random_cells_1(self, nb_cells) -> None:    
+        for _ in range(nb_cells):
+            if self.prints: print("setting cell number: ", _)
+            index_row = np.random.randint(0, self.grid.shape[0])
+            index_column = np.random.randint(0, self.grid.shape[1])
+            if self.grid[index_row, index_column] == 0:
+                random_value = np.random.randint(0, 10)
+                if self.prints: print("coords of the cell: ", index_row, ", ", index_column, "\n")
+                self.grid[index_row, index_column] = 2 if random_value <= 8 else 4
+            else: 
+                if self.prints: print("this cell is not empty, restarting...")
+                self.set_random_cells_1(1)
 
     def perform_simplification(self, row) -> None:
         if np.sum(row) == 0:

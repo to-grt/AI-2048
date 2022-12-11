@@ -6,32 +6,33 @@ import numpy as np
 testeur = Test()
 del testeur
 
-game = Grid(4,4,2)
+game = Grid(4,4)
 model = np.array([[0,0,0,0],
                   [0,0,0,0],
                   [0,0,0,0],
                   [0,0,0,0]])
+game.set(model)
 
-start = time.time()
-for _ in range(10000):
-    game.reset()
-    game.set(model)
-    game.set_random_cells_1(1)
-end = time.time()
-print(end - start)
+print(game)
+print(game.is_game_over())
+print(game.is_win())
 
-start = time.time()  
-for _ in range(10000):
-    game.reset()
-    game.set(model)
-    game.set_random_cells_2(1)
-end = time.time()
-print(end - start)
+model = np.array([[5000,0,0,0],
+                  [0,0,0,5000],
+                  [0,0,5000,0],
+                  [0,5000,0,0]])
+game.set(model)
 
-start = time.time()  
-for _ in range(10000):
-    game.reset()
-    game.set(model)
-    game.set_random_cells_3(1)
-end = time.time()
-print(end - start)
+print(game)
+print(game.is_game_over())
+print(game.is_win())
+
+model = np.array([[1,1,1,1],
+                  [1,1,1,1],
+                  [1,1,1,1],
+                  [1,1,1,1]])
+game.set(model)
+
+print(game)
+print(game.is_game_over())
+print(game.is_win())

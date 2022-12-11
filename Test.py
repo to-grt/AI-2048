@@ -16,7 +16,7 @@ class Test:
     def test_set(self) -> None:
         print("----------------------\ngrid.set tests:\n")
 
-        grid = Grid(4,4,2)
+        grid = Grid(4,4)
         model = np.array([[0,1,2,3],
                           [4,5,6,7],
                           [8,9,10,11],
@@ -25,7 +25,7 @@ class Test:
         assert (grid.grid == np.array([[0,1,2,3], [4,5,6,7], [8,9,10,11], [12,13,14,15]])).all(), ">> test 1: FAILED"
         print(">> test 1: SUCCESS")
 
-        grid = Grid(6,6,25)
+        grid = Grid(6,6)
         model = np.array([[0,1,2,3,0,0],
                           [4,5,6,7,0,0],
                           [8,9,10,11,0,0],
@@ -40,7 +40,7 @@ class Test:
     def test_roll_left(self) -> None:
         print("----------------------\nroll_left tests:\n")
 
-        grid = Grid(4,4,2)
+        grid = Grid(4,4)
         model = np.array([[0,0,0,100],
                           [0,2,2,0],
                           [2,0,0,2],
@@ -63,7 +63,7 @@ class Test:
     def test_roll_right(self) -> None:
         print("----------------------\nroll_right tests:\n")
 
-        grid = Grid(4,4,2)
+        grid = Grid(4,4)
         model = np.array([[0,0,0,100],
                           [0,2,2,0],
                           [2,0,0,2],
@@ -85,7 +85,7 @@ class Test:
     def test_roll_up(self) -> None:
         print("----------------------\nroll_up tests:\n")
 
-        grid = Grid(4,4,2)
+        grid = Grid(4,4)
         model = np.array([[0,0,0,100],
                           [0,2,2,0],
                           [2,0,0,2],
@@ -108,7 +108,7 @@ class Test:
     def test_roll_down(self) -> None:
         print("----------------------\nroll_down tests:\n")
 
-        grid = Grid(4,4,2)
+        grid = Grid(4,4)
         model = np.array([[0,0,0,100],
                           [0,2,2,0],
                           [2,0,0,2],
@@ -132,7 +132,7 @@ class Test:
         print("----------------------\nperform_simplification tests:\n")
 
         shape = (6, 6)
-        grid = Grid(height=shape[0], width=shape[1], nb_cells=5)
+        grid = Grid(height=shape[0], width=shape[1])
 
         initial_array = [0,0,0,0,0]
         expected_result = [0,0,0,0,0]
