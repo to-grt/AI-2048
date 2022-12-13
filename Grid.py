@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 class Grid:
 
@@ -6,6 +7,9 @@ class Grid:
         self.grid = np.zeros((height, width))
         self.shape = self.grid.shape
         self.prints = prints
+        self.clear = lambda: os.system('cls')
+        self.color = '\033[92m'
+        self.color_end = '\033[0m'
 
     def __repr__(self) -> str:
         repr = "\n"
@@ -18,11 +22,55 @@ class Grid:
                 value = str(int(self.grid[y,x]))
                 repr += '|'
                 for _ in range(max_len - len(value)): repr += ' '
-                repr += value
+                repr += self.color + value + self.color_end
             repr += '|\n'
         for _ in range(max_len*self.shape[0]+5):
             repr += '-'
         return repr
+
+    def game_loop(self) -> None:
+        command = ""
+        self.set_random_cells(2)
+
+        while not self.is_game_over() and not self.is_win() and command != "exit":
+
+            self.clear()
+            print("----------------------\n\n",self, "\n\n")
+            command = input("What do you want to do?\n>> ")
+            match command:
+                case "up":
+                    before = self.roll_up()
+                    if (before != self.grid).any(): self.set_random_cells(1)
+                case "down":
+                    before = self.roll_down()
+                    if (before != self.grid).any(): self.set_random_cells(1)
+                case "left":
+                    before = self.roll_left()
+                    if (before != self.grid).any(): self.set_random_cells(1)
+                case "right":
+                    before = self.roll_right()
+                    if (before != self.grid).any(): self.set_random_cells(1)
+                case "exit": pass
+                case other: input("Command not recognized, press ay key to continue...\n>> ")
+            
+            if self.is_game_over():
+                self.clear()
+                print("----------------------\n\n",self, "\n\n")
+                print("You have lost the game, the higher cell you reached was: ", np.max(self.grid))
+                input("Press any key to continue...\n>> ")
+            
+            if self.is_win():
+                self.clear()
+                print("----------------------\n\n",self, "\n\n")
+                print("You won the game !! Good job")
+                input("Press any key to continue...\n>> ")
+            
+            if command == "exit":
+                self.clear()
+                print("----------------------\n\n",self, "\n\n")
+                print("You decided to exit the game, we hope to see you soon")
+                input("Press any key to continue...\n>> ")
+                pass
 
     def is_game_over(self) -> bool:     #TODO probably optimizable
         memory = self.roll_down()
