@@ -22,7 +22,8 @@ class Grid:
                 repr += '|'
                 for _ in range(max_len - len(value)): repr += ' '
                 if value == '0': repr += bc.OKGREEN + value + bc.ENDC
-                else: repr += bc.FAIL + value + bc.ENDC
+                elif int(value) <= 32: repr += bc.FAIL + value + bc.ENDC
+                else: repr += bc.OKBLUE + value + bc.ENDC
             repr += '|\n'
         for _ in range(max_len*self.shape[0]+5):
             repr += '-'
