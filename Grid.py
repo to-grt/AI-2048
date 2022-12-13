@@ -8,7 +8,21 @@ class Grid:
         self.prints = prints
 
     def __repr__(self) -> str:
-        return str(self.grid)
+        repr = "\n"
+        max_len = len(str(int(np.max(self.grid))))
+        for y in range(self.shape[1]):
+            for _ in range(max_len*self.shape[0]+5):
+                repr += '-'
+            repr += '\n'
+            for x in range(self.shape[1]):
+                value = str(int(self.grid[y,x]))
+                repr += '|'
+                for _ in range(max_len - len(value)): repr += ' '
+                repr += value
+            repr += '|\n'
+        for _ in range(max_len*self.shape[0]+5):
+            repr += '-'
+        return repr
 
     def is_game_over(self) -> bool:     #TODO probably optimizable
         memory = self.roll_down()
@@ -54,7 +68,7 @@ class Grid:
                 if self.prints: print("this cell is not empty, restarting...")
                 self.set_random_cells(1)
 
-    def perform_simplification(self, row) -> None:
+    def perform_simplification(self, row):
         if np.sum(row) == 0:
             if self.prints: print("null row, skipping")
             return row
@@ -72,7 +86,7 @@ class Grid:
         if self.prints: print("final: ", row)
         return row
 
-    def roll_left(self):
+    def roll_left(self) -> bool:
         memory = np.copy(self.grid)
         for index, row in enumerate(self.grid):
             if self.prints: print("performing simplication on the row:")
