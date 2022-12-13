@@ -1,3 +1,4 @@
+from bcolors import bcolors as bc
 import numpy as np
 import os
 
@@ -8,8 +9,6 @@ class Grid:
         self.shape = self.grid.shape
         self.prints = prints
         self.clear = lambda: os.system('cls')
-        self.color = '\033[92m'
-        self.color_end = '\033[0m'
 
     def __repr__(self) -> str:
         repr = "\n"
@@ -22,7 +21,8 @@ class Grid:
                 value = str(int(self.grid[y,x]))
                 repr += '|'
                 for _ in range(max_len - len(value)): repr += ' '
-                repr += self.color + value + self.color_end
+                if value == '0': repr += bc.OKGREEN + value + bc.ENDC
+                else: repr += bc.FAIL + value + bc.ENDC
             repr += '|\n'
         for _ in range(max_len*self.shape[0]+5):
             repr += '-'
@@ -37,16 +37,16 @@ class Grid:
             self.clear()
             print("----------------------\n\n",self, "\n\n")
             command = input("What do you want to do?\n>> ")
-            if command == "up":
+            if command == "up" or command == "z":
                 before = self.roll_up()
                 if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "down":
+            elif command == "down" or command == "s":
                 before = self.roll_down()
                 if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "left":
+            elif command == "left" or command == "q":
                 before = self.roll_left()
                 if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "right":
+            elif command == "right" or command == "d":
                 before = self.roll_right()
                 if (before != self.grid).any(): self.set_random_cells(1)
             elif command == "exit": pass
