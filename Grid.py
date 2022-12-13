@@ -37,21 +37,20 @@ class Grid:
             self.clear()
             print("----------------------\n\n",self, "\n\n")
             command = input("What do you want to do?\n>> ")
-            match command:
-                case "up":
-                    before = self.roll_up()
-                    if (before != self.grid).any(): self.set_random_cells(1)
-                case "down":
-                    before = self.roll_down()
-                    if (before != self.grid).any(): self.set_random_cells(1)
-                case "left":
-                    before = self.roll_left()
-                    if (before != self.grid).any(): self.set_random_cells(1)
-                case "right":
-                    before = self.roll_right()
-                    if (before != self.grid).any(): self.set_random_cells(1)
-                case "exit": pass
-                case other: input("Command not recognized, press ay key to continue...\n>> ")
+            if command == "up":
+                before = self.roll_up()
+                if (before != self.grid).any(): self.set_random_cells(1)
+            elif command == "down":
+                before = self.roll_down()
+                if (before != self.grid).any(): self.set_random_cells(1)
+            elif command == "left":
+                before = self.roll_left()
+                if (before != self.grid).any(): self.set_random_cells(1)
+            elif command == "right":
+                before = self.roll_right()
+                if (before != self.grid).any(): self.set_random_cells(1)
+            elif command == "exit": pass
+            else: input("Command not recognized, press ay key to continue...\n>> ")
             
             if self.is_game_over():
                 self.clear()
