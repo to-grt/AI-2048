@@ -5,31 +5,41 @@ class State:
     #-------------------------------------------------------------------------------------------
     #------------------------STATE FUNCTIONS----------------------------------------------------  
 
-    def get_successors(self, grid) -> list:
-        succesors = []
+    def get_esperances(self, grid) -> list:
+        esperances = []
+
         right = self.roll_right(grid)
-        print(right)
-        succesors.extend(self.all_posibilities(right))
+        if (right != grid).any(): esperance_right = self.compute_esperance(self.all_posibilities(right))
+        esperances.append(esperance_right)
+
         left = self.roll_left(grid)
-        succesors.extend(self.all_posibilities(left))
+        if (left != grid).any(): esperance_left = self.compute_esperance(self.all_posibilities(left))
+        esperances.append(esperance_left)
+
         up = self.roll_up(grid)
-        succesors.extend(self.all_posibilities(up))
+        if (up != grid).any(): esperance_up = self.compute_esperance(self.all_posibilities(up))
+        esperances.append(esperance_up)
+
         down = self.roll_down(grid)
-        succesors.extend(self.all_posibilities(down))
-        return succesors
+        if (down != grid).any(): esperance_down = self.compute_esperance(self.all_posibilities(down))
+        esperances.append(esperance_down)
+        
+        return esperances
+
+    # compute the esperance of a move
+    def compute_esperance(self, successors) -> int:
+        lenght = successors.shape[0]
+        scores = np.zeros(shape=lenght)
+        for index, successor in enumerate(successors):
+            scores[index] = self.policies(successor)
+        scores[0:lenght:2] *= 0.9
+        scores[1:lenght:2] *= 0.1
+        return np.sum(scores)/(lenght/2)
 
     # score of a grid
     def policies(self, grid) -> int:
         return np.sum(grid)
 
-    def esperance_successors(self, successors) -> int:
-        results = np.empty(shape=len(successors))
-        for index, successor in enumerate(successors):
-            results[index] = self.policies(successor)
-        return np.mean(results)
-
-        
-    
     #-------------------------------------------------------------------------------------------
     #------------------------ENGINE FUNCTIONS---------------------------------------------------
 
@@ -84,4 +94,4 @@ class State:
                     memory[index_y, index_x] = 4
                     possibilities.append(np.array(memory))
                     memory[index_y, index_x] = 0
-        return possibilities
+        return np.array(possibilities)
