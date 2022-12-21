@@ -10,20 +10,28 @@ class State:
         esperances = []
 
         right = self.roll_right(grid)
-        if (right != grid).any(): esperance_right = self.compute_esperance(self.all_posibilities(right))
-        esperances.append(esperance_right)
+        if (right != grid).any():
+            esperance_right = self.compute_esperance(self.all_posibilities(right))
+            esperances.append(esperance_right)
+        else: esperances.append(0)
 
         left = self.roll_left(grid)
-        if (left != grid).any(): esperance_left = self.compute_esperance(self.all_posibilities(left))
-        esperances.append(esperance_left)
+        if (left != grid).any():
+            esperance_left = self.compute_esperance(self.all_posibilities(left))
+            esperances.append(esperance_left)
+        else: esperances.append(0)
 
         up = self.roll_up(grid)
-        if (up != grid).any(): esperance_up = self.compute_esperance(self.all_posibilities(up))
-        esperances.append(esperance_up)
+        if (up != grid).any():
+            esperance_up = self.compute_esperance(self.all_posibilities(up))
+            esperances.append(esperance_up)
+        else: esperances.append(0)
 
         down = self.roll_down(grid)
-        if (down != grid).any(): esperance_down = self.compute_esperance(self.all_posibilities(down))
-        esperances.append(esperance_down)
+        if (down != grid).any():
+            esperance_down = self.compute_esperance(self.all_posibilities(down))
+            esperances.append(esperance_down)
+        else: esperances.append(0)
         
         return esperances
 
@@ -58,6 +66,8 @@ class State:
 
             self.clear()
             print("----------------------\n\n",grid, "\n\n")
+            esperances = self.get_esperances(grid)
+            print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
             command = input("What do you want to do?\n>> ")
             if command == "up" or command == "z":
                 print("up")
