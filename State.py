@@ -73,10 +73,10 @@ class State:
 
     # score of a grid, where the policies applied.
     def policies(self, grid) -> int:
-        nb_empty_cells = grid[grid==0].shape[0]
-        sum_grid = np.sum(grid)
+        score_nb_empty_cells = self.min_max_norm(grid[grid==0].shape[0], 0, 16)
+        score_sum_grid = self.min_max_norm(np.sum(grid), 0, np.max(grid))
         arg_max = np.unravel_index(np.argmax(grid, axis=None), grid.shape)
-        distance_corner = np.sqrt((arg_max[0] - 3)**2 + (arg_max[1] - 0)**2)
+        score_distance_corner = self.min_max_norm(np.sqrt((arg_max[0] - 3)**2 + (arg_max[1] - 0)**2), 0, np.sqrt(18))
         sum_distance = 0
         for index_y, row in enumerate(grid):
             for index_x, _ in enumerate(row):
@@ -85,7 +85,8 @@ class State:
                 if index_y != 0: sum_distance += np.abs(grid[index_y-1, index_x] - grid[index_y, index_x])
                 if index_y != grid.shape[0]-1: sum_distance += np.abs(grid[index_y+1, index_x] - grid[index_y, index_x])
         if sum_distance > self.max_distances: self.max_distances = sum_distance
-        score = self.min_max_norm(nb_empty_cells, 0, 16) + self.min_max_norm(sum_grid, 0, np.max(grid)) + 1-self.min_max_norm(distance_corner, 0, np.sqrt(18)) +  1-self.min_max_norm(sum_distance, 0, self.max_distances)
+        score_sum_distance = self.min_max_norm(sum_distance, 0, self.max_distances)
+        score = score_nb_empty_cells + score_sum_grid + (1-score_distance_corner) +  (1-score_sum_distance)
         return score
 
     def min_max_norm(self, value, min, max) -> float:
