@@ -1,7 +1,33 @@
+from bcolors import bcolors as bc
 import numpy as np
 import os
 
 class State:
+
+    def __init__(self) -> None:
+        self.max_distances = 0
+
+    #-------------------------------------------------------------------------------------------
+    #------------------------USUAL FUNCTIONS----------------------------------------------------  
+
+    def repr(self, grid) -> str:
+        repr = "\n"
+        max_len = len(str(int(np.max(grid))))
+        for y in range(grid.shape[1]):
+            for _ in range(max_len*grid.shape[0]+5):
+                repr += '-'
+            repr += '\n'
+            for x in range(grid.shape[1]):
+                value = str(int(grid[y,x]))
+                repr += '|'
+                for _ in range(max_len - len(value)): repr += ' '
+                if value == '0': repr += bc.OKGREEN + value + bc.ENDC
+                elif int(value) <= 32: repr += bc.FAIL + value + bc.ENDC
+                else: repr += bc.OKBLUE + value + bc.ENDC
+            repr += '|\n'
+        for _ in range(max_len*grid.shape[0]+5):
+            repr += '-'
+        return repr
 
     #-------------------------------------------------------------------------------------------
     #------------------------STATE FUNCTIONS----------------------------------------------------  
@@ -45,19 +71,85 @@ class State:
         scores[1:lenght:2] *= 0.1
         return np.sum(scores)/(lenght/2)
 
-    # score of a grid
+    # score of a grid, where the policies applied.
     def policies(self, grid) -> int:
-        score = 0
-        for row in grid:
-            for cell in row:
-                if cell != 0:
-                    score += np.log(cell)
+        nb_empty_cells = grid[grid==0].shape[0]
+        sum_grid = np.sum(grid)
+        arg_max = np.unravel_index(np.argmax(grid, axis=None), grid.shape)
+        distance_corner = np.sqrt((arg_max[0] - 3)**2 + (arg_max[1] - 0)**2)
+        sum_distance = 0
+        for index_y, row in enumerate(grid):
+            for index_x, _ in enumerate(row):
+                if index_x != 0: sum_distance += np.abs(grid[index_y, index_x-1] - grid[index_y, index_x])
+                if index_x != grid.shape[1]-1: sum_distance += np.abs(grid[index_y, index_x+1] - grid[index_y, index_x])
+                if index_y != 0: sum_distance += np.abs(grid[index_y-1, index_x] - grid[index_y, index_x])
+                if index_y != grid.shape[0]-1: sum_distance += np.abs(grid[index_y+1, index_x] - grid[index_y, index_x])
+        if sum_distance > self.max_distances: self.max_distances = sum_distance
+        score = self.min_max_norm(nb_empty_cells, 0, 16) + self.min_max_norm(sum_grid, 0, np.max(grid)) + 1-self.min_max_norm(distance_corner, 0, np.sqrt(18)) +  1-self.min_max_norm(sum_distance, 0, self.max_distances)
         return score
+
+    def min_max_norm(self, value, min, max) -> float:
+        return (value-min)/(max - min)
 
     #-------------------------------------------------------------------------------------------
     #------------------------ENGINE FUNCTIONS---------------------------------------------------
 
     def clear(self): os.system('cls')
+
+    def ai_loop(self, grid) -> None:
+
+        command = ""
+        while not self.is_game_over(grid) and not self.is_win(grid) and command != "exit":
+
+            self.clear()
+            print("----------------------\n\n",self.repr(grid), "\n\n")
+            esperances = self.get_esperances(grid)
+            print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
+            best_choice = np.argmax(esperances)
+            if best_choice==0: command="right"
+            elif best_choice==1: command="left"
+            elif best_choice==2: command="up"
+            elif best_choice==3: command="down"
+            else: command="exit"
+            
+            print(">> ai's choice: ", command)
+            if command == "up" or command == "z":
+                print("up")
+                up = self.roll_up(grid)
+                if (up != grid).any(): grid = self.set_random_cells(up, 1)
+            elif command == "down" or command == "s":
+                print("down")
+                down = self.roll_down(grid)
+                if (down != grid).any(): grid = self.set_random_cells(down, 1)
+            elif command == "left" or command == "q":
+                print("left")
+                left = self.roll_left(grid)
+                if (left != grid).any(): grid = self.set_random_cells(left, 1)
+            elif command == "right" or command == "d":
+                print("right")
+                right = self.roll_right(grid)
+                if (right != grid).any(): grid = self.set_random_cells(right, 1)
+            elif command == "exit": pass
+            else: input("Command not recognized, press ay key to continue...\n>> ")
+            
+            if self.is_game_over(grid):
+                self.clear()
+                print("----------------------\n\n",self.repr(grid), "\n\n")
+                print("You have lost the game, the higher cell you reached was: ", np.max(grid))
+                input("Press any key to continue...\n>> ")
+            
+            if self.is_win(grid):
+                self.clear()
+                print("----------------------\n\n",self.repr(grid), "\n\n")
+                print("You won the game !! Good job")
+                input("Press any key to continue...\n>> ")
+            
+            if command == "exit":
+                self.clear()
+                print("----------------------\n\n",self.repr(grid), "\n\n")
+                print("You decided to exit the game, we hope to see you soon")
+                input("Press any key to continue...\n>> ")
+                pass
 
     def game_loop(self, grid) -> None:
 
@@ -65,7 +157,7 @@ class State:
         while not self.is_game_over(grid) and not self.is_win(grid) and command != "exit":
 
             self.clear()
-            print("----------------------\n\n",grid, "\n\n")
+            print("----------------------\n\n",self.repr(grid), "\n\n")
             esperances = self.get_esperances(grid)
             print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
             command = input("What do you want to do?\n>> ")
@@ -90,19 +182,19 @@ class State:
             
             if self.is_game_over(grid):
                 self.clear()
-                print("----------------------\n\n",grid, "\n\n")
+                print("----------------------\n\n",self.repr(grid), "\n\n")
                 print("You have lost the game, the higher cell you reached was: ", np.max(grid))
                 input("Press any key to continue...\n>> ")
             
             if self.is_win(grid):
                 self.clear()
-                print("----------------------\n\n",grid, "\n\n")
+                print("----------------------\n\n",self.repr(grid), "\n\n")
                 print("You won the game !! Good job")
                 input("Press any key to continue...\n>> ")
             
             if command == "exit":
                 self.clear()
-                print("----------------------\n\n",grid, "\n\n")
+                print("----------------------\n\n",self.repr(grid), "\n\n")
                 print("You decided to exit the game, we hope to see you soon")
                 input("Press any key to continue...\n>> ")
                 pass
