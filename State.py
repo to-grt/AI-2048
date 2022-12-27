@@ -4,7 +4,8 @@ import os
 
 class State:
 
-    def __init__(self) -> None:
+    def __init__(self, prints=False) -> None:
+        self.prints = prints
         self.max_distances = 0
         self.sum_max = 0
 
@@ -33,53 +34,53 @@ class State:
     #-------------------------------------------------------------------------------------------
     #------------------------STATE FUNCTIONS----------------------------------------------------  
 
-    def get_esperances(self, grid) -> list:
+    def get_esperances(self, grid, coefficients) -> list:
         esperances = []
 
         right = self.roll_right(grid)
         if (right != grid).any():
-            esperance_right = self.compute_esperance(self.all_posibilities(right))
+            esperance_right = self.compute_esperance(self.all_posibilities(right), coefficients)
             esperances.append(esperance_right)
         else: esperances.append(0)
 
         left = self.roll_left(grid)
         if (left != grid).any():
-            esperance_left = self.compute_esperance(self.all_posibilities(left))
+            esperance_left = self.compute_esperance(self.all_posibilities(left), coefficients)
             esperances.append(esperance_left)
         else: esperances.append(0)
 
         up = self.roll_up(grid)
         if (up != grid).any():
-            esperance_up = self.compute_esperance(self.all_posibilities(up))
+            esperance_up = self.compute_esperance(self.all_posibilities(up), coefficients)
             esperances.append(esperance_up)
         else: esperances.append(0)
 
         down = self.roll_down(grid)
         if (down != grid).any():
-            esperance_down = self.compute_esperance(self.all_posibilities(down))
+            esperance_down = self.compute_esperance(self.all_posibilities(down), coefficients)
             esperances.append(esperance_down)
         else: esperances.append(0)
         
         return esperances
 
     # compute the esperance of a move
-    def compute_esperance(self, successors) -> int:
+    def compute_esperance(self, successors, coefficients) -> int:
         lenght = successors.shape[0]
         scores = np.zeros(shape=lenght)
         for index, successor in enumerate(successors):
-            scores[index] = self.policies(successor)
+            scores[index] = self.policies(successor, coefficients)
         scores[0:lenght:2] *= 0.9
         scores[1:lenght:2] *= 0.1
         return np.sum(scores)/(lenght/2)
 
     # score of a grid, where the policies applied.
-    def policies(self, grid) -> int:
+    def policies(self, grid, coefficients) -> int:
         score_nb_empty_cells = self.min_max_norm(grid[grid==0].shape[0], 0, 16)
         sum_grid = np.sum(grid)
         if sum_grid > self.sum_max: self.sum_max = sum_grid
         score_sum_grid = self.min_max_norm(sum_grid, 0, self.sum_max)
         arg_max = np.unravel_index(np.argmax(grid, axis=None), grid.shape)
-        distance_closest_corner = np.min(np.array([np.sqrt((arg_max[0] - 0)**2 + (arg_max[1] - 0)**2), np.sqrt((arg_max[0] - 3)**2 + (arg_max[1] - 3)**2), np.sqrt((arg_max[0] - 3)**2 + (arg_max[1] - 0)**2), np.sqrt((arg_max[0] - 3)**2 + (arg_max[1] - 3)**2)]))
+        distance_closest_corner = np.min(np.array([np.sqrt((arg_max[0] - 0)**2 + (arg_max[1] - 0)**2), np.sqrt((arg_max[0] - grid.shape[0]-1)**2 + (arg_max[1] - grid.shape[1]-1)**2), np.sqrt((arg_max[0] - grid.shape[0]-1)**2 + (arg_max[1] - 0)**2), np.sqrt((arg_max[0] - grid.shape[0]-1)**2 + (arg_max[1] - grid.shape[1]-1)**2)]))
         score_distance_corner = 1-self.min_max_norm(distance_closest_corner, 0, np.sqrt(18))
         sum_distance = 0
         for index_y, row in enumerate(grid):
@@ -90,7 +91,10 @@ class State:
                 if index_y != grid.shape[0]-1: sum_distance += np.abs(grid[index_y+1, index_x] - grid[index_y, index_x])
         if sum_distance > self.max_distances: self.max_distances = sum_distance
         score_sum_distance = 1-self.min_max_norm(sum_distance, 0, self.max_distances)
-        score = score_nb_empty_cells + score_sum_grid + score_distance_corner +  score_sum_distance
+        #coefs = [1.2, 0.5, 2, 0.8] #mean 580.2666667
+        #coefs = [1,1,1,1] #mean: 608.866666
+        coefficients = [1.5, 1.5, 1.5, 1]
+        score = coefficients[0]*score_nb_empty_cells + coefficients[1]*score_sum_grid + coefficients[2]*score_distance_corner +  coefficients[3]*score_sum_distance
         return score
 
     def min_max_norm(self, value, min, max) -> float:
@@ -101,15 +105,16 @@ class State:
 
     def clear(self): os.system('cls')
 
-    def ai_loop(self, grid) -> None:
+    def ai_loop(self, grid, coefficients=[0,0,0,0]) -> None:
 
         command = ""
         while not self.is_game_over(grid) and not self.is_win(grid) and command != "exit":
 
-            self.clear()
-            print("----------------------\n\n",self.repr(grid), "\n\n")
-            esperances = self.get_esperances(grid)
-            print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
+            esperances = self.get_esperances(grid, coefficients)
+            if self.prints:
+                self.clear()
+                print("----------------------\n\n",self.repr(grid), "\n\n")
+                print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
             best_choice = np.argmax(esperances)
             if best_choice==0: command="right"
             elif best_choice==1: command="left"
@@ -117,85 +122,39 @@ class State:
             elif best_choice==3: command="down"
             else: command="exit"
             
-            print(">> ai's choice: ", command)
+            if self.prints: print(">> ai's choice: ", command)
             if command == "up" or command == "z":
-                print("up")
+                if self.prints: print("up")
                 up = self.roll_up(grid)
                 if (up != grid).any(): grid = self.set_random_cells(up, 1)
             elif command == "down" or command == "s":
-                print("down")
+                if self.prints: print("down")
                 down = self.roll_down(grid)
                 if (down != grid).any(): grid = self.set_random_cells(down, 1)
             elif command == "left" or command == "q":
-                print("left")
+                if self.prints: print("left")
                 left = self.roll_left(grid)
                 if (left != grid).any(): grid = self.set_random_cells(left, 1)
             elif command == "right" or command == "d":
-                print("right")
+                if self.prints: print("right")
                 right = self.roll_right(grid)
                 if (right != grid).any(): grid = self.set_random_cells(right, 1)
             elif command == "exit": pass
             else: input("Command not recognized, press ay key to continue...\n>> ")
             
             if self.is_game_over(grid):
-                self.clear()
-                print("----------------------\n\n",self.repr(grid), "\n\n")
-                print("You have lost the game, the higher cell you reached was: ", np.max(grid))
-                input("Press any key to continue...\n>> ")
+                if self.prints:
+                    self.clear()
+                    print("----------------------\n\n",self.repr(grid), "\n\n")
+                    print("You have lost the game, the higher cell you reached was: ", np.max(grid))
+                    input("Press any key to continue...\n>> ")
+                return np.max(grid)
             
             if self.is_win(grid):
                 self.clear()
                 print("----------------------\n\n",self.repr(grid), "\n\n")
                 print("You won the game !! Good job")
-                input("Press any key to continue...\n>> ")
-            
-            if command == "exit":
-                self.clear()
-                print("----------------------\n\n",self.repr(grid), "\n\n")
-                print("You decided to exit the game, we hope to see you soon")
-                input("Press any key to continue...\n>> ")
-                pass
-
-    def game_loop(self, grid) -> None:
-
-        command = ""
-        while not self.is_game_over(grid) and not self.is_win(grid) and command != "exit":
-
-            self.clear()
-            print("----------------------\n\n",self.repr(grid), "\n\n")
-            esperances = self.get_esperances(grid)
-            print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
-            command = input("What do you want to do?\n>> ")
-            if command == "up" or command == "z":
-                print("up")
-                up = self.roll_up(grid)
-                if (up != grid).any(): grid = self.set_random_cells(up, 1)
-            elif command == "down" or command == "s":
-                print("down")
-                down = self.roll_down(grid)
-                if (down != grid).any(): grid = self.set_random_cells(down, 1)
-            elif command == "left" or command == "q":
-                print("left")
-                left = self.roll_left(grid)
-                if (left != grid).any(): grid = self.set_random_cells(left, 1)
-            elif command == "right" or command == "d":
-                print("right")
-                right = self.roll_right(grid)
-                if (right != grid).any(): grid = self.set_random_cells(right, 1)
-            elif command == "exit": pass
-            else: input("Command not recognized, press ay key to continue...\n>> ")
-            
-            if self.is_game_over(grid):
-                self.clear()
-                print("----------------------\n\n",self.repr(grid), "\n\n")
-                print("You have lost the game, the higher cell you reached was: ", np.max(grid))
-                input("Press any key to continue...\n>> ")
-            
-            if self.is_win(grid):
-                self.clear()
-                print("----------------------\n\n",self.repr(grid), "\n\n")
-                print("You won the game !! Good job")
-                input("Press any key to continue...\n>> ")
+                if self.prints: input("Press any key to continue...\n>> ")
             
             if command == "exit":
                 self.clear()
@@ -228,7 +187,7 @@ class State:
         return True    
 
     def is_win(self, grid) -> bool:
-        if np.max(grid) >= 2048: return True
+        if np.max(grid) >= float('inf'): return True
         return False     
 
     def perform_simplification(self, row) -> np.array:
