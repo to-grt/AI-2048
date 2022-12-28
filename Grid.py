@@ -1,120 +1,131 @@
-from bcolors import bcolors as bc
+import sys
 import numpy as np
-import os
+import tkinter as tk
+import tkinter.messagebox as messagebox
+
+CELL_PADDING = 10
+BACKGROUND_COLOR = '#92877d'
+EMPTY_CELL_COLOR = '#9e948a'
+CELL_BACKGROUND_COLOR_DICT = {
+    '2.0': '#eee4da',
+    '4.0': '#ede0c8',
+    '8.0': '#f2b179',
+    '16.0': '#f59563',
+    '32.0': '#f67c5f',
+    '64.0': '#f65e3b',
+    '128.0': '#edcf72',
+    '256.0': '#edcc61',
+    '512.0': '#edc850',
+    '1024.0': '#edc53f',
+    '2048.0': '#edc22e',
+    'beyond': '#3c3a32'
+}
+CELL_COLOR_DICT = {
+        '2.0': '#776e65',
+        '4.0': '#776e65',
+        '8.0': '#f9f6f2',
+        '16.0': '#f9f6f2',
+        '32.0': '#f9f6f2',
+        '64.0': '#f9f6f2',
+        '128.0': '#f9f6f2',
+        '256.0': '#f9f6f2',
+        '512.0': '#f9f6f2',
+        '1024.0': '#f9f6f2',
+        '2048.0': '#f9f6f2',
+        'beyond': '#f9f6f2'
+}
+
+FONT = ('Verdana', 24, 'bold')
+UP_KEYS = ('w', 'W', 'Up')
+LEFT_KEYS = ('a', 'A', 'Left')
+DOWN_KEYS = ('s', 'S', 'Down')
+RIGHT_KEYS = ('d', 'D', 'Right')
 
 class Grid:
 
-    def __init__(self, height, width, prints=False) -> None:
-        self.grid = np.zeros((height, width))
-        self.shape = self.grid.shape
+    def __init__(self, n, prints=False):
         self.prints = prints
-        self.clear = lambda: os.system('cls')
+        self.size = n
+        self.grid = np.zeros((n, n))
+        self.current_score = 0
 
-    def __repr__(self) -> str:
-        repr = "\n"
-        max_len = len(str(int(np.max(self.grid))))
-        for y in range(self.shape[1]):
-            for _ in range(max_len*self.shape[0]+5):
-                repr += '-'
-            repr += '\n'
-            for x in range(self.shape[1]):
-                value = str(int(self.grid[y,x]))
-                repr += '|'
-                for _ in range(max_len - len(value)): repr += ' '
-                if value == '0': repr += bc.OKGREEN + value + bc.ENDC
-                elif int(value) <= 32: repr += bc.FAIL + value + bc.ENDC
-                else: repr += bc.OKBLUE + value + bc.ENDC
-            repr += '|\n'
-        for _ in range(max_len*self.shape[0]+5):
-            repr += '-'
-        return repr
+        self.root = tk.Tk()
+        if sys.platform == 'win32':
+            self.root.iconbitmap('2048.ico')
+        self.root.title('2048')
+        self.root.resizable(False, False)
+        self.background = tk.Frame(self.root, bg=BACKGROUND_COLOR)
+        self.cell_labels = []
+        for i in range(self.size):
+            row_labels = []
+            for j in range(self.size):
+                label = tk.Label(self.background, text='',
+                                 bg=EMPTY_CELL_COLOR,
+                                 justify=tk.CENTER, font=FONT,
+                                 width=4, height=2)
+                label.grid(row=i, column=j, padx=10, pady=10)
+                row_labels.append(label)
+            self.cell_labels.append(row_labels)
+        self.background.pack(side=tk.TOP)
+
+        self.over = False
+        self.won = False
+        self.keep_playing = False
 
     def game_loop(self) -> None:
-        command = ""
         self.set_random_cells(2)
+        self.paint()
+        self.root.bind('<Key>', self.key_handler)
+        self.root.mainloop()
 
-        while not self.is_game_over() and not self.is_win() and command != "exit":
+    def key_handler(self, event):
+        if self.is_game_terminated():
+            return
 
-            self.clear()
-            print("----------------------\n\n",self, "\n\n")
-            command = input("What do you want to do?\n>> ")
-            if command == "up" or command == "z":
-                before = self.roll_up()
-                if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "down" or command == "s":
-                before = self.roll_down()
-                if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "left" or command == "q":
-                before = self.roll_left()
-                if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "right" or command == "d":
-                before = self.roll_right()
-                if (before != self.grid).any(): self.set_random_cells(1)
-            elif command == "exit": pass
-            else: input("Command not recognized, press ay key to continue...\n>> ")
-            
-            if self.is_game_over():
-                self.clear()
-                print("----------------------\n\n",self, "\n\n")
-                print("You have lost the game, the higher cell you reached was: ", np.max(self.grid))
-                input("Press any key to continue...\n>> ")
-            
-            if self.is_win():
-                self.clear()
-                print("----------------------\n\n",self, "\n\n")
-                print("You won the game !! Good job")
-                input("Press any key to continue...\n>> ")
-            
-            if command == "exit":
-                self.clear()
-                print("----------------------\n\n",self, "\n\n")
-                print("You decided to exit the game, we hope to see you soon")
-                input("Press any key to continue...\n>> ")
-                pass
+        key_value = event.keysym
+        print('{} key pressed'.format(key_value))
+        if key_value in UP_KEYS:
+            before = self.roll_up()
+            if (before != self.grid).any(): self.set_random_cells(1)
+        elif key_value in LEFT_KEYS:
+            before = self.roll_left()
+            if (before != self.grid).any(): self.set_random_cells(1)
+        elif key_value in DOWN_KEYS:
+            before = self.roll_down()
+            if (before != self.grid).any(): self.set_random_cells(1)
+        elif key_value in RIGHT_KEYS:
+            before = self.roll_right()
+            if (before != self.grid).any(): self.set_random_cells(1)
+        else:
+            pass
 
-    def is_game_over(self) -> bool:     #TODO probably optimizable
-        memory = self.roll_down()
-        if not np.array_equal(self.grid, memory):
-            self.set(memory)
-            return False
-        memory = self.roll_up()
-        if not np.array_equal(self.grid, memory):
-            self.set(memory)
-            return False
-        memory = self.roll_left()
-        if not np.array_equal(self.grid, memory):
-            self.set(memory)
-            return False
-        memory = self.roll_right()
-        if not np.array_equal(self.grid, memory):
-            self.set(memory)
-            return False    
-        return True
+        self.paint()
+        print('Score: {}'.format(self.current_score))
+        if self.found_2048():
+            self.you_win()
+            if not self.keep_playing:
+                return
 
-    def is_win(self) -> bool:
-        if np.max(self.grid) >= 2048: return True
-        return False        
+        self.paint()
+        if not self.can_move():
+            self.over = True
+            self.game_over()
 
-    def reset(self) -> None:
-        self.__init__(self.shape[0], self.shape[1], 0)
+    def you_win(self):
+        if not self.won:
+            self.won = True
+            print('You Win!')
+            if messagebox.askyesno('2048', 'You Win!\n'
+                                       'Are you going to continue the 2048 game?'):
+                self.keep_playing = True
 
-    def set(self, model) -> None:
-        assert model.shape == self.grid.shape, "The model and the grid must have the same shapes. model's shape: "
-        self.grid = np.copy(model)
+    def game_over(self):
+        print('Game over!')
+        messagebox.showinfo('2048', 'Oops!\n'
+                                    'Game over!')
 
-    # Maybe its opti...
-    def set_random_cells(self, nb_cells) -> None:    
-        for _ in range(nb_cells):
-            if self.prints: print("setting cell number: ", _)
-            index_row = np.random.randint(0, self.grid.shape[0])
-            index_column = np.random.randint(0, self.grid.shape[1])
-            if self.grid[index_row, index_column] == 0:
-                random_value = np.random.randint(0, 10)
-                if self.prints: print("coords of the cell: ", index_row, ", ", index_column, "\n")
-                self.grid[index_row, index_column] = 2 if random_value <= 8 else 4
-            else: 
-                if self.prints: print("this cell is not empty, restarting...")
-                self.set_random_cells(1)
+    def is_game_terminated(self):
+        return self.over or (self.won and (not self.keep_playing))
 
     def perform_simplification(self, row):
         if np.sum(row) == 0:
@@ -128,6 +139,7 @@ class Grid:
             if row[index] == row[index+1]:
                 row[index] *= 2
                 row[index+1] = 0
+                self.current_score += row[index]
         if self.prints: print("mid_too: ", row)
         row = row[row != 0]
         row = np.append(row, np.zeros(shape=(initial_shape-row.shape[0])))
@@ -171,3 +183,64 @@ class Grid:
             self.grid[:, index] = np.flip(self.perform_simplification(np.flip(col)))
             if self.prints: print("--------------")
         return memory
+
+    def can_move(self):
+        return self.has_empty_cells() or self.can_merge()
+
+    def has_empty_cells(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.grid[i][j] == 0:
+                    return True
+        return False
+
+    def can_merge(self):
+        for i in range(self.size):
+            for j in range(self.size - 1):
+                if self.grid[i][j] == self.grid[i][j + 1]:
+                    return True
+        for j in range(self.size):
+            for i in range(self.size - 1):
+                if self.grid[i][j] == self.grid[i + 1][j]:
+                    return True
+        return False    
+
+    def found_2048(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.grid[i][j] >= 2048:
+                    return True
+        return False
+
+    def set_random_cells(self, nb_cells) -> None:    
+        for _ in range(nb_cells):
+            index_row = np.random.randint(0, self.grid.shape[0])
+            index_column = np.random.randint(0, self.grid.shape[1])
+            if self.grid[index_row, index_column] == 0:
+                random_value = np.random.randint(0, 10)
+                self.grid[index_row, index_column] = 2 if random_value <= 8 else 4
+            else: 
+                self.set_random_cells(1)
+
+    '''The GUI view class of the 2048 game showing via tkinter.'''
+
+    def paint(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.grid[i][j] == 0:
+                    self.cell_labels[i][j].configure(
+                         text='',
+                         bg=EMPTY_CELL_COLOR)
+                else:
+                    cell_text = str(self.grid[i][j])
+                    if self.grid[i][j] > 2048:
+                        bg_color = CELL_BACKGROUND_COLOR_DICT.get('beyond')
+                        fg_color = CELL_COLOR_DICT.get('beyond')
+                    else:
+                        bg_color = CELL_BACKGROUND_COLOR_DICT.get(cell_text)
+                        fg_color = CELL_COLOR_DICT.get(cell_text)
+                    self.cell_labels[i][j].configure(
+                        text=cell_text,
+                        bg=bg_color, fg=fg_color)
+
+
