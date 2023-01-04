@@ -1,7 +1,7 @@
 import numpy as np
 import time
 
-from numba import jit, int32
+from numba import jit, int32, boolean
 
 
 @jit(nopython=True)
@@ -60,7 +60,22 @@ def roll_down(grid):
         resulted_grid[:, index] = np.flip(perform_simplification(np.flip(col)))
     return resulted_grid   
 
+@jit(nopython=True)
+def is_game_over(grid) -> bool:
+    down = roll_down(grid)
+    if not np.array_equal(grid, down): return False
+    up = roll_up(grid)
+    if not np.array_equal(grid, up): return False
+    left = roll_left(grid)
+    if not np.array_equal(grid, left): return False
+    right = roll_right(grid)
+    if not np.array_equal(grid, right): return False    
+    return True    
 
+@jit(nopython=True)
+def is_win(grid) -> bool:
+    if np.max(grid) >= 10000: return True
+    return False     
 
 
 
@@ -82,6 +97,10 @@ grid = roll_up(grid)
 print("up:\n", grid)
 grid = roll_down(grid)
 print("down:\n", grid)
+is_game = is_game_over(grid)
+print("is_game_over? ", is_game)
+is_it_win = is_win(grid)
+print("is_it_win? ", is_it_win)
 
 end = time.time()
 print("elapsed time: ", end-start)
