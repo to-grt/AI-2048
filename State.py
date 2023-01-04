@@ -5,6 +5,7 @@ import os
 class State:
 
     def __init__(self, prints=False) -> None:
+        self.MAX_DEPTH = 2
         self.prints = prints
         self.max_distances = 0
         self.sum_max = 0
@@ -32,49 +33,53 @@ class State:
         return repr
 
     #-------------------------------------------------------------------------------------------
-    #------------------------STATE FUNCTIONS----------------------------------------------------  
+    #------------------------STATE FUNCTIONS----------------------------------------------------
 
-    def get_esperances(self, grid, coefficients) -> list:
+    def get_esperances(self, grid, depth) -> list:
         esperances = []
 
         right = self.roll_right(grid)
         if (right != grid).any():
-            esperance_right = self.compute_esperance(self.all_posibilities(right), coefficients)
+            esperance_right = self.compute_esperance(self.all_posibilities(right), depth)
             esperances.append(esperance_right)
         else: esperances.append(0)
 
         left = self.roll_left(grid)
         if (left != grid).any():
-            esperance_left = self.compute_esperance(self.all_posibilities(left), coefficients)
+            esperance_left = self.compute_esperance(self.all_posibilities(left), depth)
             esperances.append(esperance_left)
         else: esperances.append(0)
 
         up = self.roll_up(grid)
         if (up != grid).any():
-            esperance_up = self.compute_esperance(self.all_posibilities(up), coefficients)
+            esperance_up = self.compute_esperance(self.all_posibilities(up), depth)
             esperances.append(esperance_up)
         else: esperances.append(0)
 
         down = self.roll_down(grid)
         if (down != grid).any():
-            esperance_down = self.compute_esperance(self.all_posibilities(down), coefficients)
+            esperance_down = self.compute_esperance(self.all_posibilities(down), depth)
             esperances.append(esperance_down)
         else: esperances.append(0)
         
         return esperances
 
     # compute the esperance of a move
-    def compute_esperance(self, successors, coefficients) -> int:
+    def compute_esperance(self, successors, depth) -> int:
         lenght = successors.shape[0]
         scores = np.zeros(shape=lenght)
         for index, successor in enumerate(successors):
-            scores[index] = self.policies(successor, coefficients)
+            if depth == self.MAX_DEPTH:
+                scores[index] = self.policies(successor)
+            else:
+                scores[index] = np.max(self.get_esperances(successor, depth+1))
         scores[0:lenght:2] *= 0.9
         scores[1:lenght:2] *= 0.1
         return np.sum(scores)/(lenght/2)
 
     # score of a grid, where the policies applied.
-    def policies(self, grid, coefficients) -> int:
+    def policies(self, grid) -> int:
+        if self.is_game_over(grid): return 0.001
         score_nb_empty_cells = self.min_max_norm(grid[grid==0].shape[0], 0, 16)
         sum_grid = np.sum(grid)
         if sum_grid > self.sum_max: self.sum_max = sum_grid
@@ -85,10 +90,10 @@ class State:
         sum_distance = 0
         for index_y, row in enumerate(grid):
             for index_x, _ in enumerate(row):
-                if index_x != 0: sum_distance += np.abs(grid[index_y, index_x-1] - grid[index_y, index_x])
-                if index_x != grid.shape[1]-1: sum_distance += np.abs(grid[index_y, index_x+1] - grid[index_y, index_x])
-                if index_y != 0: sum_distance += np.abs(grid[index_y-1, index_x] - grid[index_y, index_x])
-                if index_y != grid.shape[0]-1: sum_distance += np.abs(grid[index_y+1, index_x] - grid[index_y, index_x])
+                if index_x != 0:                sum_distance += np.abs(grid[index_y, index_x-1] - grid[index_y, index_x])
+                if index_x != grid.shape[1]-1:  sum_distance += np.abs(grid[index_y, index_x+1] - grid[index_y, index_x])
+                if index_y != 0:                sum_distance += np.abs(grid[index_y-1, index_x] - grid[index_y, index_x])
+                if index_y != grid.shape[0]-1:  sum_distance += np.abs(grid[index_y+1, index_x] - grid[index_y, index_x])
         if sum_distance > self.max_distances: self.max_distances = sum_distance
         score_sum_distance = 1-self.min_max_norm(sum_distance, 0, self.max_distances)
         #coefs = [1.2, 0.5, 2, 0.8] #mean 580.2666667
@@ -105,12 +110,12 @@ class State:
 
     def clear(self): os.system('cls')
 
-    def ai_loop(self, grid, coefficients=[0,0,0,0]) -> None:
+    def ai_loop(self, grid) -> None:
 
         command = ""
         while not self.is_game_over(grid) and not self.is_win(grid) and command != "exit":
 
-            esperances = self.get_esperances(grid, coefficients)
+            esperances = self.get_esperances(grid, depth=1)
             if self.prints:
                 self.clear()
                 print("----------------------\n\n",self.repr(grid), "\n\n")
