@@ -1,6 +1,8 @@
 from bcolors import bcolors as bc
+
 import numpy as np
 import os
+
 
 class State:
 
@@ -69,10 +71,8 @@ class State:
         lenght = successors.shape[0]
         scores = np.zeros(shape=lenght)
         for index, successor in enumerate(successors):
-            if depth == self.MAX_DEPTH:
-                scores[index] = self.policies(successor)
-            else:
-                scores[index] = np.max(self.get_esperances(successor, depth+1))
+            if depth == self.MAX_DEPTH: scores[index] = self.policies(successor)
+            else: scores[index] = np.max(self.get_esperances(successor, depth+1))
         scores[0:lenght:2] *= 0.9
         scores[1:lenght:2] *= 0.1
         return np.sum(scores)/(lenght/2)
@@ -117,7 +117,7 @@ class State:
 
             esperances = self.get_esperances(grid, depth=1)
             if self.prints:
-                self.clear()
+                #self.clear()
                 print("----------------------\n\n",self.repr(grid), "\n\n")
                 print("espectation of the ai (1 deep): right:", esperances[0], "  left: ", esperances[1], "  up: ", esperances[2], "  down: ", esperances[3])
             best_choice = np.argmax(esperances)
