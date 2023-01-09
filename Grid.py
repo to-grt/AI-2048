@@ -36,16 +36,23 @@ CELL_COLOR_DICT = {
 }
 
 FONT = ('Verdana', 24, 'bold')
+UP_KEYS_AZERTY = ('z', 'Z', 'Up')
+LEFT_KEYS_AZERTY = ('q', 'Q', 'Left')
+UP_KEYS_QWERTY = ('w', 'W', 'Up')
+LEFT_KEYS_QWERTY = ('a', 'A', 'Left')
 UP_KEYS = ('w', 'W', 'Up')
 LEFT_KEYS = ('a', 'A', 'Left')
 DOWN_KEYS = ('s', 'S', 'Down')
 RIGHT_KEYS = ('d', 'D', 'Right')
+AZERTY_SET = {'AZERTY','azerty'}
+QWERTY_SET = {'QWERTY', 'qwerty'}
 
 class Grid:
 
-    def __init__(self, n, prints=False):
+    def __init__(self, n, key_input, prints=False):
         self.prints = prints
         self.size = n
+        self.key_input = key_input
         self.grid = np.zeros((n, n), dtype=int)
         self.current_score = 0
 
@@ -72,6 +79,7 @@ class Grid:
         self.won = False
         self.keep_playing = False
 
+
     def game_loop(self) -> None:
         self.set_random_cells(2)
         self.paint()
@@ -84,13 +92,21 @@ class Grid:
 
         key_value = event.keysym
         print('{} key pressed'.format(key_value))
-        if key_value in UP_KEYS:
-            before = self.roll_up()
-            if (before != self.grid).any(): self.set_random_cells(1)
-        elif key_value in LEFT_KEYS:
-            before = self.roll_left()
-            if (before != self.grid).any(): self.set_random_cells(1)
-        elif key_value in DOWN_KEYS:
+        if self.key_input in AZERTY_SET:
+            if key_value in UP_KEYS_AZERTY:
+                before = self.roll_up()
+                if (before != self.grid).any(): self.set_random_cells(1)
+            elif key_value in LEFT_KEYS_AZERTY:
+                before = self.roll_left()
+                if (before != self.grid).any(): self.set_random_cells(1)
+        else:
+            if key_value in UP_KEYS_QWERTY:
+                before = self.roll_up()
+                if (before != self.grid).any(): self.set_random_cells(1)
+            elif key_value in LEFT_KEYS_QWERTY:
+                before = self.roll_left()
+                if (before != self.grid).any(): self.set_random_cells(1)
+        if key_value in DOWN_KEYS:
             before = self.roll_down()
             if (before != self.grid).any(): self.set_random_cells(1)
         elif key_value in RIGHT_KEYS:
