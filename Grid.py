@@ -36,6 +36,10 @@ CELL_COLOR_DICT = {
 }
 
 FONT = ('Verdana', 24, 'bold')
+UP_KEYS_AZERTY = ('z', 'Z', 'Up')
+LEFT_KEYS_AZERTY = ('q', 'Q', 'Left')
+UP_KEYS_QWERTY = ('w', 'W', 'Up')
+LEFT_KEYS_QWERTY = ('a', 'A', 'Left')
 UP_KEYS = ('w', 'W', 'Up')
 LEFT_KEYS = ('a', 'A', 'Left')
 DOWN_KEYS = ('s', 'S', 'Down')
@@ -43,9 +47,10 @@ RIGHT_KEYS = ('d', 'D', 'Right')
 
 class Grid:
 
-    def __init__(self, n, prints=False):
+    def __init__(self, n, key_input, prints=False):
         self.prints = prints
         self.size = n
+        self.key_input = key_input
         self.grid = np.zeros((n, n), dtype=int)
         self.current_score = 0
 
@@ -71,6 +76,7 @@ class Grid:
         self.over = False
         self.won = False
         self.keep_playing = False
+
 
     def game_loop(self) -> None:
         self.set_random_cells(2)
