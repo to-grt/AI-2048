@@ -10,6 +10,8 @@ while global_input not in quit_input:
     if global_input in keyboard_input:
         game = Grid(4, global_input)
         game.game_loop()
+        print("See you soon !")
+        break
     if global_input in quit_input:
         print("See you soon !")
     else:
