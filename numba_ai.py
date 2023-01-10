@@ -134,7 +134,7 @@ def roll_down(grid):
     for index in range(resulted_grid.shape[1]):
         col = resulted_grid[:, index]
         resulted_grid[:, index] = np.flip(perform_simplification(np.flip(col)))
-    return resulted_grid   
+    return resulted_grid
 
 @jit(nopython=True)
 def is_game_over(grid) -> bool:
