@@ -8,7 +8,7 @@ MAX_DEPTH       = 2
 SUM_MAX         = 0
 MAX_DISTANCES   = 0
 
-@jit(nb.int32(nb.int32, nb.int32, nb.int32), nopython=True)
+@jit(nb.float64(nb.int32, nb.int32, nb.int32), nopython=True)
 def min_max_norm(value, min, max):
     return (value-min)/(max - min)
 
@@ -101,8 +101,6 @@ def set_random_cells(grid, nb_cells):
 
 @jit(nb.float64[:](nb.int32[:,:], nb.int32, nb.int32),nopython=True)
 def policies(grid, SUM_MAX, MAX_DISTANCES):
-    print("grid:\n", grid)
-    print("is_game_over? ", is_game_over(grid))
     if is_game_over(grid): return np.array([0.001, SUM_MAX, MAX_DISTANCES])
     score_nb_empty_cells = min_max_norm(np.sum(grid==0), 0, 16)
     sum_grid = np.sum(grid)
@@ -114,7 +112,7 @@ def policies(grid, SUM_MAX, MAX_DISTANCES):
     score_distance_corner = 1-min_max_norm(distance_closest_corner, 0, np.sqrt(18))
     sum_distance = 0
     for index_y, row in enumerate(grid):
-        for index_x, _ in enumerate(row):
+        for index_x, _  in enumerate(row):
             if index_x != 0:                sum_distance += np.abs(grid[index_y, index_x-1] - grid[index_y, index_x])
             if index_x != grid.shape[1]-1:  sum_distance += np.abs(grid[index_y, index_x+1] - grid[index_y, index_x])
             if index_y != 0:                sum_distance += np.abs(grid[index_y-1, index_x] - grid[index_y, index_x])
@@ -123,14 +121,16 @@ def policies(grid, SUM_MAX, MAX_DISTANCES):
     score_sum_distance = 1-min_max_norm(sum_distance, 0, MAX_DISTANCES)
     coefficients = [1.5, 1.5, 1.5, 1]
     score = coefficients[0]*score_nb_empty_cells + coefficients[1]*score_sum_grid + coefficients[2]*score_distance_corner +  coefficients[3]*score_sum_distance
-    print("after checks, score=", score)
     return np.array([score, SUM_MAX, MAX_DISTANCES])
 
 # beaucoup de répétition de code dans cette fonction, mais c'est à cause de numba, les fonctions s'appelant les unes et les autres posent des soucis
 #@jit(nb.float64[:](nb.int32[:,:], nb.int32, nb.int32, nb.int32, nb.int32), nopython=True)
 def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
     scores=None
-    esperances = []
+    esperances = np.empty(shape=(7,), dtype=np.float64)
+    esperances[4] = MAX_DEPTH
+    esperances[5] = SUM_MAX
+    esperances[6] = MAX_DISTANCES
     right = roll_right(grid)
     if (right != grid).any():
         successors = all_posibilities(right)
@@ -138,14 +138,17 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
             if depth == MAX_DEPTH:
-                scores[index], SUM_MAX, MAX_DISTANCES = policies(successor, SUM_MAX, MAX_DISTANCES)
+                scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
+                if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+                if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                esperances, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
-                scores[index] = np.max(esperances)
+                s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+                s_esp = [s_esp_0, s_esp_1, s_esp_2, s_esp_3]
+                scores[index] = np.max(s_esp)
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
-        esperances.append(np.sum(scores)/(nb_successors/2)) #esperance right
-    else: esperances.append(0)
+        esperances[0] = np.sum(scores)/(nb_successors/2) #esperance right
+    else: esperances[0] = 0
 
     left = roll_left(grid)
     if (left != grid).any():
@@ -154,14 +157,17 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
             if depth == MAX_DEPTH:
-                scores[index], SUM_MAX, MAX_DISTANCES = policies(successor, SUM_MAX, MAX_DISTANCES)
+                scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
+                if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+                if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                esperances, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
-                scores[index] = np.max(esperances)
+                s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+                s_esp = [s_esp_0, s_esp_1, s_esp_2, s_esp_3]
+                scores[index] = np.max(s_esp)
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
-        esperances.append(np.sum(scores)/(nb_successors/2)) #esperance left
-    else: esperances.append(0)
+        esperances[1] = np.sum(scores)/(nb_successors/2) #esperance right
+    else: esperances[1] = 0
 
     up = roll_up(grid)
     if (up != grid).any():
@@ -169,14 +175,18 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         nb_successors = successors.shape[0]
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
-            if depth == MAX_DEPTH: scores[index], SUM_MAX, MAX_DISTANCES = policies(successor, SUM_MAX, MAX_DISTANCES)
+            if depth == MAX_DEPTH:
+                scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
+                if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+                if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                esperances, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
-                scores[index] = np.max(esperances)
+                s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+                s_esp = [s_esp_0, s_esp_1, s_esp_2, s_esp_3]
+                scores[index] = np.max(s_esp)
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
-        esperances.append(np.sum(scores)/(nb_successors/2)) #esperance up
-    else: esperances.append(0)
+        esperances[2] = np.sum(scores)/(nb_successors/2) #esperance right
+    else: esperances[2] = 0
 
     down = roll_down(grid)
     if (down != grid).any():
@@ -184,17 +194,20 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         nb_successors = successors.shape[0]
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
-            if depth == MAX_DEPTH: scores[index], SUM_MAX, MAX_DISTANCES = policies(successor, SUM_MAX, MAX_DISTANCES)
+            if depth == MAX_DEPTH:
+                scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
+                if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+                if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                esperances, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
-                scores[index] = np.max(esperances)
+                s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+                s_esp = [s_esp_0, s_esp_1, s_esp_2, s_esp_3]
+                scores[index] = np.max(s_esp)
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
-        esperances.append(np.sum(scores)/(nb_successors/2)) #esperance down
-    else: esperances.append(0)
+        esperances[3] = np.sum(scores)/(nb_successors/2) #esperance right
+    else: esperances[3] = 0
     
-    to_return = [esperances, MAX_DEPTH, SUM_MAX, MAX_DISTANCES]
-    return to_return
+    return esperances
 
 
 
@@ -204,8 +217,9 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
 
 
 grid = np.array([[0,1,2,3], [4,5,6,7], [8,9,10,11], [12,13,14,15]])
-
-"""start = time.time()
+grid = np.array([[0,0,0,0], [0,1,1,0], [0,1,1,0], [0,0,0,0]])
+"""
+start = time.time()
 print("initial:\n", grid)
 grid = roll_left(grid)
 print("left:\n", grid)
@@ -233,10 +247,11 @@ end = time.time()
 print("elapsed time: ", end-start)"""
 
 
+print(get_esperances(grid, 1, 1, 0, 0))
 
-successors = all_posibilities(grid)
 
-print( get_esperances(grid, 1, 1, 0, 0))
+
+
 
 
 
