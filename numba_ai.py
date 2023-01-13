@@ -29,7 +29,7 @@ def repr(grid):
 def min_max_norm(value, min, max):
     return (value-min)/(max - min)
 
-@jit(nb.int32[:,:,:](nb.int32[:,:]), nopython=True)
+@jit(nb.int32[:,:,:](nb.int32[:,:]), nopython=True, cache=True)
 def all_posibilities(grid):
     result = np.empty(shape=(0, grid.shape[0], grid.shape[1]), dtype=np.int32) 
     copied_grid = np.expand_dims(np.copy(grid), axis=0)
@@ -116,10 +116,10 @@ def set_random_cells(grid, nb_cells):
             return set_random_cells(grid, 1)
     return resulted_grid
 
-@jit(nb.float64[:](nb.int32[:,:], nb.int32, nb.int32),nopython=True)
+@jit(nb.float64[:](nb.int32[:,:], nb.int32, nb.int32), nopython=True)
 def policies(grid, SUM_MAX, MAX_DISTANCES):
     if is_game_over(grid): return np.array([0.001, SUM_MAX, MAX_DISTANCES])
-    score_nb_empty_cells = min_max_norm(np.sum(grid==0), 0, 16)
+    score_nb_empty_cells = min_max_norm(np.sum(grid==0), 0, 14)
     sum_grid = np.sum(grid)
     if sum_grid > SUM_MAX: SUM_MAX = sum_grid
     score_sum_grid = min_max_norm(sum_grid, 0, SUM_MAX)
@@ -228,14 +228,16 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
 
 def clear(): os.system('cls')
 
-def ai_loop(grid, DEPTH_MAX, SUM_MAX, MAX_DISTANCES):
+def ai_loop(grid, DEPTH_MAX):
 
+
+    SUM_MAX = 0
+    MAX_DISTANCES = 0
     command = ""
     while not is_game_over(grid) and not is_win(grid) and command != "exit":
 
         results = get_esperances(grid, depth=1, MAX_DEPTH=DEPTH_MAX, SUM_MAX=SUM_MAX, MAX_DISTANCES=MAX_DISTANCES)
         esperances = results[:4]
-        DEPTH_MAX = results[4]
         SUM_MAX = results[5]
         MAX_DISTANCES = results[6]
         best_choice = np.argmax(esperances)
@@ -259,9 +261,13 @@ def ai_loop(grid, DEPTH_MAX, SUM_MAX, MAX_DISTANCES):
             if (right != grid).any(): grid = set_random_cells(right, 1)
         elif command == "exit": pass
         else: input("Command not recognized, press ay key to continue...\n>> ")
+    
+        clear()
+        print("----------------------\n\n", repr(grid), "\n\n")
+
         
         if is_game_over(grid):
-            #clear()
+            clear()
             print("----------------------\n\n", repr(grid), "\n\n")
             print("Game over :( Good job going that far !\nMax cell achieved:", np.max(grid))
         
@@ -276,14 +282,15 @@ def ai_loop(grid, DEPTH_MAX, SUM_MAX, MAX_DISTANCES):
             print("You decided to exit the game, we hope to see you soon")
             input("Press any key to continue...\n>> ")
             pass
+            
+        
 
 
 
-for ite in range(20):
-    print("iteration number ", ite)
-    grid = np.array([[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
-    grid = set_random_cells(grid, 2)
-    start = time.time()
-    ai_loop(grid=grid, DEPTH_MAX=2, SUM_MAX=0, MAX_DISTANCES=0)
-    end = time.time()
-    print("elapsed time: ", end-start)
+
+grid = np.array([[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
+grid = set_random_cells(grid, 2)
+start = time.time()
+ai_loop(grid=grid, DEPTH_MAX=2)
+end = time.time()
+print("elapsed time: ", end-start)
