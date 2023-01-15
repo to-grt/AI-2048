@@ -228,7 +228,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
 
 def clear(): os.system('cls')
 
-def ai_loop(grid, DEPTH_MAX):
+def ai_loop(grid):
 
 
     SUM_MAX = 0
@@ -236,6 +236,10 @@ def ai_loop(grid, DEPTH_MAX):
     command = ""
     while not is_game_over(grid) and not is_win(grid) and command != "exit":
 
+
+        nb_empty_cells = np.sum(grid==0)
+        if nb_empty_cells >= 5: DEPTH_MAX = 2
+        else: DEPTH_MAX = 3
         results = get_esperances(grid, depth=1, MAX_DEPTH=DEPTH_MAX, SUM_MAX=SUM_MAX, MAX_DISTANCES=MAX_DISTANCES)
         esperances = results[:4]
         SUM_MAX = results[5]
@@ -263,7 +267,7 @@ def ai_loop(grid, DEPTH_MAX):
         else: input("Command not recognized, press ay key to continue...\n>> ")
     
         clear()
-        print("----------------------\n\n", repr(grid), "\n\n")
+        print("----------------------\n\n","DEPTH_MAX=", DEPTH_MAX,"\n", repr(grid), "\n\n")
 
         
         if is_game_over(grid):
@@ -291,6 +295,6 @@ def ai_loop(grid, DEPTH_MAX):
 grid = np.array([[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
 grid = set_random_cells(grid, 2)
 start = time.time()
-ai_loop(grid=grid, DEPTH_MAX=2)
+ai_loop(grid=grid)
 end = time.time()
 print("elapsed time: ", end-start)
