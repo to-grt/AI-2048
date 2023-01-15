@@ -161,7 +161,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
             else:
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
-                scores[index] = np.max(s_esp)
+                scores[index] = np.max(s_esp)+0.001
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
         esperances[0] = np.sum(scores)/(nb_successors/2) #esperance right
@@ -180,7 +180,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
             else:
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
-                scores[index] = np.max(s_esp)
+                scores[index] = np.max(s_esp)+0.001
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
         esperances[1] = np.sum(scores)/(nb_successors/2) #esperance right
@@ -199,7 +199,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
             else:
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
-                scores[index] = np.max(s_esp)
+                scores[index] = np.max(s_esp)+0.001
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
         esperances[2] = np.sum(scores)/(nb_successors/2) #esperance right
@@ -218,7 +218,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
             else:
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
-                scores[index] = np.max(s_esp)
+                scores[index] = np.max(s_esp)+0.001
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
         esperances[3] = np.sum(scores)/(nb_successors/2) #esperance right-è
@@ -228,7 +228,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
 
 def clear(): os.system('cls')
 
-def ai_loop(grid):
+def ai_loop(grid, prints=True):
 
 
     SUM_MAX = 0
@@ -238,8 +238,10 @@ def ai_loop(grid):
 
 
         nb_empty_cells = np.sum(grid==0)
-        if nb_empty_cells >= 5: DEPTH_MAX = 2
-        else: DEPTH_MAX = 3
+        if nb_empty_cells >= 6: DEPTH_MAX = 2
+        elif nb_empty_cells >= 3: DEPTH_MAX = 3
+        elif nb_empty_cells >= 2: DEPTH_MAX = 4
+        else: DEPTH_MAX = 5
         results = get_esperances(grid, depth=1, MAX_DEPTH=DEPTH_MAX, SUM_MAX=SUM_MAX, MAX_DISTANCES=MAX_DISTANCES)
         esperances = results[:4]
         SUM_MAX = results[5]
@@ -266,35 +268,59 @@ def ai_loop(grid):
         elif command == "exit": pass
         else: input("Command not recognized, press ay key to continue...\n>> ")
     
-        clear()
-        print("----------------------\n\n","DEPTH_MAX=", DEPTH_MAX,"\n", repr(grid), "\n\n")
+        if prints:
+            clear()
+            print("----------------------\n\n","DEPTH_MAX=", DEPTH_MAX,"\n", repr(grid), "\n\n")
 
         
         if is_game_over(grid):
-            clear()
-            print("----------------------\n\n", repr(grid), "\n\n")
-            print("Game over :( Good job going that far !\nMax cell achieved:", np.max(grid))
+            if prints:
+                clear()
+                print("----------------------\n\n", repr(grid), "\n\n")
+                print("Game over :( Good job going that far !\nMax cell achieved:", np.max(grid))
+            return np.max(grid)
         
         if is_win(grid):
-            clear()
-            print("----------------------\n\n", repr(grid), "\n\n")
-            print("You won the game !! Good job")
+            if prints:
+                clear()
+                print("----------------------\n\n", repr(grid), "\n\n")
+                print("You won the game !! Good job")
         
         if command == "exit":
-            clear()
-            print("----------------------\n\n", repr(grid), "\n\n")
-            print("You decided to exit the game, we hope to see you soon")
-            input("Press any key to continue...\n>> ")
+            if prints:
+                clear()
+                print("----------------------\n\n", repr(grid), "\n\n")
+                print("You decided to exit the game, we hope to see you soon")
+                input("Press any key to continue...\n>> ")
             pass
             
         
 
 
-
-
 grid = np.array([[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
 grid = set_random_cells(grid, 2)
-start = time.time()
-ai_loop(grid=grid)
-end = time.time()
-print("elapsed time: ", end-start)
+
+nb_tests = 5
+results = []
+
+for index_test in range(nb_tests):
+    print("run number", index_test+1,":",end="")
+    start = time.time()
+    res = ai_loop(grid=grid, prints=True)
+    results.append(res)
+    end = time.time()
+    print("  result: ", res, end="")
+    print("  elapsed time: ", end-start)
+
+
+results = np.array(results)
+length = 100/results.shape[0]
+r_512  = np.sum(results>=512)
+r_1024 = np.sum(results>=1024)
+r_2048 = np.sum(results>=2048)
+r_4096 = np.sum(results>=4096)
+
+print("% reaching 512:", int(r_512*length), "%")
+print("% reaching 1024:", int(r_1024*length), "%")
+print("% reaching 2048:", int(r_2048*length), "%")
+print("% reaching 4096:", int(r_4096*length), "%")
