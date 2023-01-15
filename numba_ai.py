@@ -100,7 +100,7 @@ def is_game_over(grid) -> bool:
 
 @jit(nb.boolean(nb.int32[:,:]), nopython=True)
 def is_win(grid) -> bool:
-    if np.max(grid) >= 10000: return True
+    if np.max(grid) >= 4096: return True
     return False  
 
 @jit(nb.int32[:,:](nb.int32[:,:], int32),nopython=True)
@@ -285,6 +285,7 @@ def ai_loop(grid, prints=True):
                 clear()
                 print("----------------------\n\n", repr(grid), "\n\n")
                 print("You won the game !! Good job")
+            return np.max(grid)
         
         if command == "exit":
             if prints:
@@ -300,13 +301,13 @@ def ai_loop(grid, prints=True):
 grid = np.array([[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
 grid = set_random_cells(grid, 2)
 
-nb_tests = 5
+nb_tests = 30
 results = []
 
 for index_test in range(nb_tests):
     print("run number", index_test+1,":",end="")
     start = time.time()
-    res = ai_loop(grid=grid, prints=True)
+    res = ai_loop(grid=grid, prints=False)
     results.append(res)
     end = time.time()
     print("  result: ", res, end="")
@@ -314,13 +315,17 @@ for index_test in range(nb_tests):
 
 
 results = np.array(results)
-length = 100/results.shape[0]
+length = results.shape[0]
+ratio = 100/length
+r_256  = np.sum(results>=256)
 r_512  = np.sum(results>=512)
 r_1024 = np.sum(results>=1024)
 r_2048 = np.sum(results>=2048)
 r_4096 = np.sum(results>=4096)
 
-print("% reaching 512:", int(r_512*length), "%")
-print("% reaching 1024:", int(r_1024*length), "%")
-print("% reaching 2048:", int(r_2048*length), "%")
-print("% reaching 4096:", int(r_4096*length), "%")
+print("reaching 256:", r_256, "/", length,"=  ", int(r_256*ratio), "%")
+print("reaching 512:", r_512, "/", length,"=  ", int(r_512*ratio), "%")
+print("reaching 1024:", r_1024, "/", length,"=  ", int(r_1024*ratio), "%")
+print("reaching 2048:", r_2048, "/", length,"=  ", int(r_2048*ratio), "%")
+print("reaching 4096:", r_4096, "/", length,"=  ", int(r_4096*ratio), "%")
+
