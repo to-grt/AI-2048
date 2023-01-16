@@ -148,23 +148,17 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
     esperances[4] = MAX_DEPTH
     esperances[5] = SUM_MAX
     esperances[6] = MAX_DISTANCES
-
     right = roll_right(grid)
     if (right != grid).any():
         successors = all_posibilities(right)
         nb_successors = successors.shape[0]
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
-            if depth >= MAX_DEPTH:
+            if depth == MAX_DEPTH:
                 scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
                 if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
-                if temp_max_dist > esperances[6]: esperances[depth] = temp_max_dist
+                if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                nb_empty_cells = np.sum(right==0)
-                if nb_empty_cells >= 6: MAX_DEPTH = 2
-                elif nb_empty_cells >= 3: MAX_DEPTH = 3
-                elif nb_empty_cells >= 2: MAX_DEPTH = 4
-                else: MAX_DEPTH = 5
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
                 scores[index] = np.max(s_esp)+0.001
@@ -179,16 +173,11 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         nb_successors = successors.shape[0]
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
-            if depth >= MAX_DEPTH:
+            if depth == MAX_DEPTH:
                 scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
                 if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
                 if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                nb_empty_cells = np.sum(left==0)
-                if nb_empty_cells >= 6: MAX_DEPTH = 2
-                elif nb_empty_cells >= 3: MAX_DEPTH = 3
-                elif nb_empty_cells >= 2: MAX_DEPTH = 4
-                else: MAX_DEPTH = 5
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
                 scores[index] = np.max(s_esp)+0.001
@@ -203,16 +192,11 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         nb_successors = successors.shape[0]
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
-            if depth >= MAX_DEPTH:
+            if depth == MAX_DEPTH:
                 scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
                 if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
                 if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                nb_empty_cells = np.sum(up==0)
-                if nb_empty_cells >= 6: MAX_DEPTH = 2
-                elif nb_empty_cells >= 3: MAX_DEPTH = 3
-                elif nb_empty_cells >= 2: MAX_DEPTH = 4
-                else: MAX_DEPTH = 5
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
                 scores[index] = np.max(s_esp)+0.001
@@ -227,16 +211,11 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
         nb_successors = successors.shape[0]
         scores = np.zeros(shape=nb_successors)
         for index, successor in enumerate(successors):
-            if depth >= MAX_DEPTH:
+            if depth == MAX_DEPTH:
                 scores[index], temp_sum_max, temp_max_dist = policies(successor, SUM_MAX, MAX_DISTANCES)
                 if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
                 if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
             else:
-                nb_empty_cells = np.sum(down==0)
-                if nb_empty_cells >= 6: MAX_DEPTH = 2
-                elif nb_empty_cells >= 3: MAX_DEPTH = 3
-                elif nb_empty_cells >= 2: MAX_DEPTH = 4
-                else: MAX_DEPTH = 5
                 s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances(successor, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
                 s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
                 scores[index] = np.max(s_esp)+0.001
@@ -315,19 +294,23 @@ def ai_loop(grid, prints=True):
                 print("You decided to exit the game, we hope to see you soon")
                 input("Press any key to continue...\n>> ")
             pass
+            
+        
 
 
-print("starting")
 grid = np.array([[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]])
 grid = set_random_cells(grid, 2)
+
 start = time.time()
 res = ai_loop(grid=grid, prints=True)
 end = time.time()
-print("res: ", res)
-print("elapsed time: ", end-start)
+print("  result: ", res)
+print("  elapsed time: ", end-start)
 
 
-"""nb_tests = 30
+
+"""
+nb_tests = 30
 results = []
 
 for index_test in range(nb_tests):
