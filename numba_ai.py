@@ -221,10 +221,68 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
                 scores[index] = np.max(s_esp)+0.001
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
-        esperances[3] = np.sum(scores)/(nb_successors/2) #esperance right-è
+        esperances[3] = np.sum(scores)/(nb_successors/2) #esperance right
     else: esperances[3] = 0
     
     return esperances
+
+@jit(nb.float64[:](nb.int32[:,:], nb.int32, nb.int32, nb.int32, nb.int32), nopython=True)
+def get_esperances_simplified(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
+    esperances = np.empty(shape=(7,), dtype=np.float64)
+    esperances[4] = MAX_DEPTH
+    esperances[5] = SUM_MAX
+    esperances[6] = MAX_DISTANCES
+
+    right = roll_right(grid)
+    if (right != grid).any():
+        if depth == MAX_DEPTH:
+            esperances[0], temp_sum_max, temp_max_dist = policies(right, SUM_MAX, MAX_DISTANCES)
+            if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+            if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
+        else:
+            s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances_simplified(right, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+            s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
+            esperances[0] = np.max(s_esp)+0.001
+    else: esperances[0] = 0
+
+    left = roll_left(grid)
+    if (left != grid).any():
+        if depth == MAX_DEPTH:
+            esperances[1], temp_sum_max, temp_max_dist = policies(left, SUM_MAX, MAX_DISTANCES)
+            if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+            if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
+        else:
+            s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances_simplified(left, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+            s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
+            esperances[1] = np.max(s_esp)+0.001
+    else: esperances[1] = 0
+
+    up = roll_up(grid)
+    if (up != grid).any():
+        if depth == MAX_DEPTH:
+            esperances[2], temp_sum_max, temp_max_dist = policies(up, SUM_MAX, MAX_DISTANCES)
+            if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+            if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
+        else:
+            s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances_simplified(up, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+            s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
+            esperances[2] = np.max(s_esp)+0.001
+    else: esperances[2] = 0
+
+    down = roll_down(grid)
+    if (down != grid).any():
+        if depth == MAX_DEPTH:
+            esperances[3], temp_sum_max, temp_max_dist = policies(down, SUM_MAX, MAX_DISTANCES)
+            if temp_sum_max > esperances[5]: esperances[5] = temp_sum_max
+            if temp_max_dist > esperances[6]: esperances[6] = temp_max_dist
+        else:
+            s_esp_0, s_esp_1, s_esp_2, s_esp_3, MAX_DEPTH, SUM_MAX, MAX_DISTANCES = get_esperances_simplified(down, depth+1, MAX_DEPTH, SUM_MAX, MAX_DISTANCES)
+            s_esp = np.array([s_esp_0, s_esp_1, s_esp_2, s_esp_3])
+            esperances[3] = np.max(s_esp)+0.001
+    else: esperances[3] = 0
+
+    return esperances
+
 
 def clear(): os.system('cls')
 
@@ -242,7 +300,8 @@ def ai_loop(grid, prints=True):
         elif nb_empty_cells >= 3: DEPTH_MAX = 3
         elif nb_empty_cells >= 2: DEPTH_MAX = 4
         else: DEPTH_MAX = 5
-        results = get_esperances(grid, depth=1, MAX_DEPTH=DEPTH_MAX, SUM_MAX=SUM_MAX, MAX_DISTANCES=MAX_DISTANCES)
+        results = get_esperances_simplified(grid, depth=1, MAX_DEPTH=DEPTH_MAX, SUM_MAX=SUM_MAX, MAX_DISTANCES=MAX_DISTANCES)
+        #results = get_esperances(grid, depth=1, MAX_DEPTH=DEPTH_MAX, SUM_MAX=SUM_MAX, MAX_DISTANCES=MAX_DISTANCES)
         esperances = results[:4]
         SUM_MAX = results[5]
         MAX_DISTANCES = results[6]
@@ -307,7 +366,7 @@ results = []
 for index_test in range(nb_tests):
     print("run number", index_test+1,":",end="")
     start = time.time()
-    res = ai_loop(grid=grid, prints=False)
+    res = ai_loop(grid=grid, prints=True)
     results.append(res)
     end = time.time()
     print("  result: ", res, end="")
