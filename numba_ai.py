@@ -242,7 +242,7 @@ def get_esperances(grid, depth, MAX_DEPTH, SUM_MAX, MAX_DISTANCES):
                 scores[index] = np.max(s_esp)+0.001
         scores[0:nb_successors:2] *= 0.9
         scores[1:nb_successors:2] *= 0.1
-        esperances[3] = np.sum(scores)/(nb_successors/2) #esperance right
+        esperances[3] = np.sum(scores)/(nb_successors/2) #esperance right-è
     else: esperances[3] = 0
     
     return esperances
@@ -333,7 +333,7 @@ results = []
 for index_test in range(nb_tests):
     print("run number", index_test+1,":",end="")
     start = time.time()
-    res = ai_loop(grid=grid, prints=True)
+    res = ai_loop(grid=grid, prints=False)
     results.append(res)
     end = time.time()
     print("  result: ", res, end="")
